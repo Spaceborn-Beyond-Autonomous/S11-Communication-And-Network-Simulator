@@ -1,0 +1,73 @@
+links:
+  lte:
+    latency:
+      base_ms: 50
+    jitter:
+      min_ms: 5
+      max_ms: 20
+    packet_loss:
+      rate: 0.01           # 1%
+    bandwidth:
+      max_bps: 20000000    # 20 Mbps
+      queue_capacity: 64
+
+  5g:
+    latency:
+      base_ms: 20
+    jitter:
+      min_ms: 3
+      max_ms: 10
+    packet_loss:
+      rate: 0.005          # 0.5%
+    bandwidth:
+      max_bps: 200000000   # 200 Mbps
+      queue_capacity: 128
+
+  mesh:
+    latency:
+      base_ms: 8
+    jitter:
+      min_ms: 1
+      max_ms: 5
+    packet_loss:
+      rate: 0.008           # slightly higher than wifi — multi-hop adds risk
+    bandwidth:
+      max_bps: 30000000    # 30 Mbps
+      queue_capacity: 64
+
+  lora:     #rawlora
+    latency:
+      base_ms: 400          
+    jitter:
+      min_ms: 30
+      max_ms: 150
+    packet_loss:
+      rate: 0.03
+    bandwidth:
+      max_bps: 5500          # SF7 @ 125kHz — fastest raw LoRa PHY rate
+      queue_capacity: 8       # still a narrow pipe, but workable at 5.5kbps
+
+
+  satellite:
+    latency:
+      base_ms: 300           # GEO-like round-trip-ish delay
+    jitter:
+      min_ms: 5
+      max_ms: 40
+    packet_loss:
+      rate: 0.02             # 2%
+    bandwidth:
+      max_bps: 2000000       # 2 Mbps
+      queue_capacity: 32
+
+  default:
+    latency:
+      base_ms: 30
+    jitter:
+      min_ms: 0
+      max_ms: 10
+    packet_loss:
+      rate: 0.01
+    bandwidth:
+      max_bps: 10000000
+      queue_capacity: 64
