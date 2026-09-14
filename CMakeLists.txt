@@ -42,3 +42,10 @@ target_include_directories(s11_simulator
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include
 )
+
+target_compile_options(s11_simulator
+    PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+)
