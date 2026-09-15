@@ -1,10 +1,10 @@
+
 #include <string.h>   
-#include <stdio.h>    
+#include <stdio.h>  
 #include "s11_link.h"
 
 
 #define MAX_LINKS 64
-
 
 static S11Link g_links[MAX_LINKS];
 static int g_link_count = 0;
@@ -29,15 +29,15 @@ void link_manager_init(void) {
 
 int link_manager_add_link(const char *node_a, const char *node_b, LinkState initial_state) {
     if (g_link_count >= MAX_LINKS) {
-        return -1;
+        return -1; 
     }
     if (find_link_index(node_a, node_b) != -1) {
-        return -1; 
+        return -1;
     }
 
     S11Link *new_link = &g_links[g_link_count];
     strncpy(new_link->node_a, node_a, S11_MAX_NODE_NAME_LEN - 1);
-    new_link->node_a[S11_MAX_NODE_NAME_LEN - 1] = '\0'; 
+    new_link->node_a[S11_MAX_NODE_NAME_LEN - 1] = '\0';
     strncpy(new_link->node_b, node_b, S11_MAX_NODE_NAME_LEN - 1);
     new_link->node_b[S11_MAX_NODE_NAME_LEN - 1] = '\0';
     new_link->state = initial_state;
@@ -50,7 +50,6 @@ int link_manager_add_link(const char *node_a, const char *node_b, LinkState init
 LinkState link_manager_get_state(const char *node_a, const char *node_b) {
     int idx = find_link_index(node_a, node_b);
     if (idx == -1) {
-    
         return LINK_STATE_DOWN;
     }
     return g_links[idx].state;
@@ -68,4 +67,11 @@ int link_manager_set_state(const char *node_a, const char *node_b, LinkState new
 
 int link_manager_count(void) {
     return g_link_count;
+}
+
+const S11Link *link_manager_get_link_at(int index) {
+    if (index < 0 || index >= g_link_count) {
+        return NULL; 
+    }
+    return &g_links[index];
 }
