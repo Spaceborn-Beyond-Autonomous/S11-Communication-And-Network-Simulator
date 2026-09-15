@@ -14,9 +14,9 @@ static const char *event_type_to_string(s11_event_type_t type) {
         case S11_EVENT_LINK_UP:                    return "LINK_UP";
         case S11_EVENT_LINK_DOWN:                  return "LINK_DOWN";
         case S11_EVENT_PARTITION_CREATED:          return "PARTITION_START";
-         S11_EVENT_PARTITION_RECOVERED:              return "PARTITION_END";
-        case S11_EVENT_JAMMING_STOPPED:            return "JAM_START";
-        case S11_EVENT_JAMMING_STARTED:            return "JAM_END";
+        case S11_EVENT_PARTITION_RECOVERED:        return "PARTITION_END";
+        case S11_EVENT_JAMMING_STARTED:            return "JAM_START";
+        case S11_EVENT_JAMMING_STOPPED:            return "JAM_END";
         case S11_EVENT_RECOVERY_COMPLETE:          return "RECOVERY_COMPLETE";
         default:                       return "UNKNOWN_EVENT";
     }
@@ -41,10 +41,14 @@ void logger_log_packet(uint64_t timestamp,
 }
 
 void logger_log_event(const s11_event_t *evt) {
-    printf("[t=%llums] EVENT=%s node_a=%s node_b=%s desc=\"%s\"\n",
-           (unsigned long long)evt->timestamp_us,
+    if(evt == NULL)
+    {
+        return;
+    }
+
+    printf("[t=%llums] EVENT=%s node_a=%s node_b=%s\n",
+           (unsigned long long)evt->timestamp_us/1000,
            event_type_to_string(evt->type),
            evt->node_a,
-           evt->node_b,
-           evt->description);
+           evt->node_b);
 }

@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include "s11_packet.h"
+#include "s11_config.h"
 
 /************************************* Macros Part ************************************* */
 
@@ -83,6 +84,8 @@ typedef struct
      * @brief Number of packets dropped by the network.
     */
     uint64_t packets_dropped;
+
+    s11_network_config_t config;
 
 } s11_network_t;
 

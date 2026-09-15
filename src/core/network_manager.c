@@ -11,7 +11,7 @@ s11_network_t *s11_network_create(const char *network_id)
 {
     s11_network_t *network;
 
-    if( (network_id == NULL ) || 
+    if( (network_id == NULL ) ||
         (strlen(network_id) >= S11_NETWORK_ID_MAX_LEN) )
     {
         return (NULL);
@@ -27,6 +27,12 @@ s11_network_t *s11_network_create(const char *network_id)
     network->packets_transmitted = 0U;
     network->packets_received    = 0U;
     network->packets_dropped     = 0U;
+
+    if(!s11_config_init(&network->config))
+    {
+        free(network);
+        return NULL;
+    }
 
     return (network);
 }
@@ -45,7 +51,10 @@ s11_process_result_t s11_network_process(
     s11_network_t *network,
     const s11_packet_t *packet)
 {
-    s11_process_result_t  result = {0};
+    s11_process_result_t result = {
+        .status = S11_PACKET_DROPPED,
+        .delay_us = -1
+    };
     LogStatus log_state;
 
     if((network == NULL) || (packet == NULL))
@@ -59,19 +68,11 @@ s11_process_result_t s11_network_process(
     {
         network->packets_dropped++;
         result.status = S11_PACKET_DROPPED;
-        log_state = LOG_STATUS_DROP;
 
-        logger_log_packet(packet->timestamp_us/ 1000,
-                          packet->source,
-                          packet->destination,
-                          protocol_to_string(packet->protocol),
-                          log_state,
-                          result.delay_us/ 1000,
-                          "Invalid packet");
         return (result);
     }
 
-   network->packets_received++;
+    network->packets_received++;
     log_state = LOG_STATUS_RX;
 
     logger_log_packet(packet->timestamp_us / 1000,
@@ -79,21 +80,20 @@ s11_process_result_t s11_network_process(
                     packet->destination,
                     protocol_to_string(packet->protocol),
                     log_state,
-                    result.delay_us / 1000,
+                    -1,
                     "Packet received");
 
 
     LinkState link_state;
     link_state = link_manager_get_state(packet->source, packet->destination);
 
-    if((LINK_STATE_DOWN == link_state) || 
-       (LINK_STATE_PARTITIONED == link_state) || 
+    if((LINK_STATE_DOWN == link_state) ||
+       (LINK_STATE_PARTITIONED == link_state) ||
        (LINK_STATE_JAMMED == link_state))
     {
         network->packets_dropped++;
         result.status = S11_PACKET_DROPPED;
         log_state = LOG_STATUS_DROP;
-        result.delay_us = -1;
 
         logger_log_packet(packet->timestamp_us / 1000,
                   packet->source,
@@ -102,7 +102,7 @@ s11_process_result_t s11_network_process(
                   log_state,
                   -1,
                   "Link unavailable");
-                  
+
         return (result);
     }
 
@@ -117,9 +117,9 @@ s11_process_result_t s11_network_process(
     result.status = S11_PACKET_FORWARDED ;
     log_state = LOG_STATUS_TX;
     result.delay_us = 0U;
-    
+
     logger_log_packet(packet->timestamp_us/ 1000,
-                      packet->source, 
+                      packet->source,
                       packet->destination,
                       protocol_to_string(packet->protocol),
                       log_state,

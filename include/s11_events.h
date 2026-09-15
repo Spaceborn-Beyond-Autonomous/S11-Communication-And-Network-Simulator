@@ -25,7 +25,7 @@
 #include "s11_common.h"
 
 /************************************* Macros Part ************************************* */
-#define S11_MAX_EVENT_DESC_LEN 64
+
 /************************************* User Data Types Part ************************************* */
 
 /**
@@ -122,8 +122,6 @@ typedef struct
      * the affected network link.
      */
     char node_b[S11_NODE_ID_MAX_LEN];
-
-    char description[S11_MAX_EVENT_DESC_LEN];
 
 } s11_event_t;
 

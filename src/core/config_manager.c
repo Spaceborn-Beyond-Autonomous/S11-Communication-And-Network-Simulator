@@ -1,6 +1,5 @@
 #include "s11_config.h"
 #include <stddef.h>
-
 bool s11_config_init( s11_network_config_t *config )
 {
     if(config == NULL)
@@ -29,7 +28,7 @@ bool s11_config_validate( const s11_network_config_t *config )
         return (false);
     }
 
-    if(config ->bandwidth_mbps < 0.0)
+    if(config ->bandwidth_mbps <= 0.0)
     {
         return(false);
     }
