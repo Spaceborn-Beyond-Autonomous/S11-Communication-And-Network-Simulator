@@ -53,7 +53,7 @@ typedef struct
     /**
      * @brief Network delay applied to the packet in microseconds.
     */
-    uint64_t delay_us;
+    int64_t delay_us;
 
 } s11_process_result_t;
 
