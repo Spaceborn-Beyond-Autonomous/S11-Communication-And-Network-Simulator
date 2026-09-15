@@ -134,6 +134,12 @@ typedef struct
 
 } s11_link_model_config_t;
 
+typedef struct
+{
+    uint32_t queued_packets;
+    uint64_t pending_delay_us; /* sum of transmission times of packets currently ahead in queue */
+} s11_bandwidth_state_t;
+
 /************************************* Function Prototypes Part ************************************* */
 
 /**
