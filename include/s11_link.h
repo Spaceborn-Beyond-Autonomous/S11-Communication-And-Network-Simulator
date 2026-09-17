@@ -26,8 +26,10 @@
 /************************************* Include Part ************************************* */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "s11_common.h"
+
 
 /************************************* Macros Part ************************************* */
 
@@ -123,6 +125,13 @@ typedef struct
      */
     uint64_t last_state_change_ts;
 
+    /**
+     * @brief Physical link type (e.g. "lte", "5g", "mesh", "lora",
+     * "satellite"). Used to select the matching s11_link_model_config_t
+     * from config/network.yaml.
+    */
+    char link_type[16];
+
 } S11Link;
 
 
@@ -150,6 +159,10 @@ void link_manager_init(void);
  * @param[in] initial_state
  * Initial runtime state assigned to the new link.
  *
+ * @param[in] link_type
+ * Physical or logical communication type assigned to the link,
+ * such as "lte", "5g", "mesh", "lora", or "satellite".
+ *
  * @return
  * 0 if the link was added successfully.
  * A negative value if the link could not be added.
@@ -157,6 +170,7 @@ void link_manager_init(void);
 int link_manager_add_link(
     const char *node_a,
     const char *node_b,
+    const char *link_type,
     LinkState initial_state
 );
 
@@ -178,6 +192,33 @@ LinkState link_manager_get_state(
     const char *node_a,
     const char *node_b
 );
+
+/**
+ * @brief Retrieves the physical type of a communication link.
+ *
+ * @details
+ * The link type identifies the physical or logical communication medium
+ * used by the link and is used to select the corresponding network
+ * degradation configuration.
+ *
+ * @param[in] node_a
+ * Identifier of the first node connected by the link.
+ *
+ * @param[in] node_b
+ * Identifier of the second node connected by the link.
+ *
+ * @param[out] link_type
+ * Buffer that receives the link type string.
+ *
+ * @param[in] link_type_size
+ * Size of the output buffer in bytes.
+ *
+ * @return
+ * 0 if the link type was retrieved successfully.
+ * A negative value if the link does not exist or the output buffer
+ * is invalid or too small.
+ */
+int link_manager_get_type( const char *node_a, const char *node_b, char *link_type, size_t link_type_size);
 
 
 /**
@@ -220,63 +261,9 @@ int link_manager_set_state(
 int link_manager_count(void);
 
 
-/**
- * @brief Retrieves the current state of a communication link.
- *
- * @details
- * This inline function provides an alternative API name for
- * @ref link_manager_get_state.
- *
- * @param[in] node_a
- * Identifier of the first node connected by the link.
- *
- * @param[in] node_b
- * Identifier of the second node connected by the link.
- *
- * @return
- * Current state of the requested link.
- */
-static inline LinkState link_manager_get_link_state(
-    const char *node_a,
-    const char *node_b
-)
-{
-    return link_manager_get_state(node_a, node_b);
-}
+const S11Link *link_manager_get_link_at(int index);
 
 
-/**
- * @brief Updates the state of a communication link.
- *
- * @details
- * This inline function provides an alternative API name for
- * @ref link_manager_set_state.
- *
- * @param[in] node_a
- * Identifier of the first node connected by the link.
- *
- * @param[in] node_b
- * Identifier of the second node connected by the link.
- *
- * @param[in] new_state
- * New runtime state to assign to the link.
- *
- * @param[in] timestamp
- * Simulation timestamp of the state change in microseconds.
- *
- * @return
- * 0 if the link state was updated successfully.
- * A negative value if the requested link does not exist.
- */
-static inline int link_manager_set_link_state(
-    const char *node_a,
-    const char *node_b,
-    LinkState new_state,
-    uint64_t timestamp
-)
-{
-    return link_manager_set_state(node_a, node_b, new_state, timestamp);
-}
 
 
 /************************************* End of File ************************************* */

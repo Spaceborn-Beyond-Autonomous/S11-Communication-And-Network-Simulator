@@ -1,11 +1,27 @@
 #include "s11_network.h"
+#include "s11_packet.h"
+#include "s11_model.h"
 #include "s11_link.h"
+#include "s11_config.h"
 #include "s11_logger.h"
+#include "s11_monitor.h"
 
 #include <stdlib.h>
 #include <string.h>
 
+
+static s11_bandwidth_state_t g_bandwidth_state =
+{
+    0U,
+    0U
+};
+
 static const char *protocol_to_string(s11_protocol_t protocol);
+
+static s11_process_result_t apply_models(
+    const s11_packet_t *packet,
+    const s11_link_model_config_t *config
+);
 
 s11_network_t *s11_network_create(const char *network_id)
 {
@@ -28,12 +44,6 @@ s11_network_t *s11_network_create(const char *network_id)
     network->packets_received    = 0U;
     network->packets_dropped     = 0U;
 
-    if(!s11_config_init(&network->config))
-    {
-        free(network);
-        return NULL;
-    }
-
     return (network);
 }
 
@@ -55,7 +65,6 @@ s11_process_result_t s11_network_process(
         .status = S11_PACKET_DROPPED,
         .delay_us = -1
     };
-    LogStatus log_state;
 
     if((network == NULL) || (packet == NULL))
     {
@@ -73,13 +82,12 @@ s11_process_result_t s11_network_process(
     }
 
     network->packets_received++;
-    log_state = LOG_STATUS_RX;
 
     logger_log_packet(packet->timestamp_us / 1000,
                     packet->source,
                     packet->destination,
                     protocol_to_string(packet->protocol),
-                    log_state,
+                    LOG_STATUS_RX,
                     -1,
                     "Packet received");
 
@@ -93,39 +101,88 @@ s11_process_result_t s11_network_process(
     {
         network->packets_dropped++;
         result.status = S11_PACKET_DROPPED;
-        log_state = LOG_STATUS_DROP;
 
         logger_log_packet(packet->timestamp_us / 1000,
                   packet->source,
                   packet->destination,
                   protocol_to_string(packet->protocol),
-                  log_state,
+                  LOG_STATUS_DROP,
                   -1,
                   "Link unavailable");
 
         return (result);
     }
 
-    /*
-     * TODO:
-     * Apply packet-loss model.
-     * Calculate latency and jitter.
-     * Check bandwidth.
-    */
+    s11_link_model_config_t config;
+    char link_type[S11_LINK_ID_MAX_LEN];
+    s11_process_result_t model_result;
+
+    if(link_manager_get_type( packet->source, packet->destination,
+       link_type, sizeof(link_type)) != 0)
+    {
+        network->packets_dropped++;
+        result.status = S11_PACKET_DROPPED;
+
+        logger_log_packet(
+            packet->timestamp_us / 1000,
+            packet->source,
+            packet->destination,
+            protocol_to_string(packet->protocol),
+            LOG_STATUS_DROP,
+            -1,
+            "Link type unavailable");
+
+        return (result);
+    }
+
+    if(!s11_config_load(&config, "config/network.yaml", link_type))
+    {
+        network->packets_dropped++;
+        result.status = S11_PACKET_DROPPED; 
+
+        logger_log_packet(
+            packet->timestamp_us / 1000,
+            packet->source,
+            packet->destination,
+            protocol_to_string(packet->protocol),
+            LOG_STATUS_DROP,
+            -1,
+            "Link configuration unavailable");
+
+        return (result);
+    }
+
+    model_result = apply_models(packet, &config);
+
+    if(model_result.status == S11_PACKET_DROPPED)
+    {
+        network->packets_dropped++;
+        result = model_result;
+
+        logger_log_packet(
+            packet->timestamp_us / 1000,
+            packet->source,
+            packet->destination,
+            protocol_to_string(packet->protocol),
+            LOG_STATUS_DROP,
+            (int)(result.delay_us / 1000),
+            "Packet dropped by network model");
+
+        return (result);
+    }
 
     network->packets_transmitted++;
-    result.status = S11_PACKET_FORWARDED ;
-    log_state = LOG_STATUS_TX;
-    result.delay_us = 0U;
 
-    logger_log_packet(packet->timestamp_us/ 1000,
-                      packet->source,
-                      packet->destination,
-                      protocol_to_string(packet->protocol),
-                      log_state,
-                      result.delay_us/ 1000,
-                      "Packet forwarded");
+    result = model_result;
 
+    logger_log_packet(
+        packet->timestamp_us / 1000,
+        packet->source,
+        packet->destination,
+        protocol_to_string(packet->protocol),
+        LOG_STATUS_TX,
+        (int)(result.delay_us / 1000),
+        "Packet forwarded");
 
     return (result);
 }
@@ -147,4 +204,59 @@ static const char *protocol_to_string(s11_protocol_t protocol)
         default:
             return "UNKNOWN";
     }
+}
+
+static s11_process_result_t apply_models( const s11_packet_t *packet,
+                                          const s11_link_model_config_t *config
+)
+{
+    s11_process_result_t final_result;
+    int64_t total_delay_us = 0;
+
+    s11_model_apply_fn models[] =
+    {
+        packet_loss_apply,
+        latency_apply,
+        jitter_apply,
+        bandwidth_apply
+    };
+
+    void *states[] =
+    {
+        NULL,
+        NULL,
+        NULL,
+        &g_bandwidth_state
+    };
+
+    const size_t model_count = sizeof(models) / sizeof(models[0]);
+
+    final_result.status = S11_PACKET_FORWARDED;
+    final_result.delay_us = 0;
+
+    for (size_t i = 0U; i < model_count; ++i)
+    {
+        s11_process_result_t result;
+
+        result = models[i](
+            packet,
+            config,
+            states[i]
+        );
+
+        if (result.status == S11_PACKET_DROPPED)
+        {
+            final_result.status = S11_PACKET_DROPPED;
+            final_result.delay_us = total_delay_us;
+
+            return final_result;
+        }
+
+        total_delay_us += result.delay_us;
+    }
+
+    final_result.status = S11_PACKET_FORWARDED;
+    final_result.delay_us = total_delay_us;
+
+    return final_result;
 }

@@ -5,6 +5,9 @@ project(S11_Communication_Network_Simulator
     LANGUAGES C
 )
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(YAML REQUIRED yaml-0.1)
+
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -41,6 +44,12 @@ add_executable(s11_simulator
 target_include_directories(s11_simulator
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include
+        ${YAML_INCLUDE_DIRS}
+)
+
+target_link_libraries(s11_simulator
+    PRIVATE
+        ${YAML_LIBRARIES}
 )
 
 target_compile_options(s11_simulator

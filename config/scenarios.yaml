@@ -1,0 +1,13 @@
+scenarios:
+
+  normal:
+    description: "Normal communication conditions"
+
+  high_latency:
+    description: "High latency communication"
+
+  high_packet_loss:
+    description: "Unreliable communication"
+
+  low_bandwidth:
+    description: "Bandwidth constrained communication"

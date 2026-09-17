@@ -19,38 +19,11 @@
 /************************************* Include Part ************************************* */
 
 #include <stdbool.h>
+#include "s11_model.h"
 
 /************************************* Macros Part ************************************* */
 
 /************************************* User Data Types Part ************************************* */
-
-/**
- * @struct s11_network_config_t
- * @brief Represents the configurable network conditions of the S11 simulator.
-*/
-typedef struct
-{
-    /**
-      * @brief Network latency in milliseconds.
-    */
-    double latency_ms;
-
-    /**
-     * @brief Network jitter in milliseconds.
-     */
-    double jitter_ms;
-
-    /**
-     * @brief Packet loss percentage.
-     */
-    double packet_loss_percent;
-
-    /**
-     * @brief Network bandwidth in megabits per second.
-     */
-    double bandwidth_mbps;
-
-} s11_network_config_t;
 
 /************************************* Function Prototypes Part ************************************* */
 
@@ -64,7 +37,7 @@ typedef struct
  * true if the configuration was initialized successfully.
  * false if the configuration pointer is NULL.
 */
-bool s11_config_init( s11_network_config_t *config );
+bool s11_config_init( s11_link_model_config_t*config );
 
 
 /**
@@ -77,7 +50,7 @@ bool s11_config_init( s11_network_config_t *config );
  * true if all configuration parameters are valid.
  * false if the configuration is NULL or contains invalid values.
 */
-bool s11_config_validate( const s11_network_config_t *config );
+bool s11_config_validate( const s11_link_model_config_t *config );
 
 /**
  * @brief Loads network configuration values from a configuration file.
@@ -92,7 +65,7 @@ bool s11_config_validate( const s11_network_config_t *config );
  * true if the configuration was loaded successfully.
  * false if the configuration could not be loaded or is invalid.
 */
-bool s11_config_load( s11_network_config_t *config, const char *config_file );
+bool s11_config_load( s11_link_model_config_t *config, const char *config_file, const char *link_type);
 
 /************************************* End of File ************************************* */
 
