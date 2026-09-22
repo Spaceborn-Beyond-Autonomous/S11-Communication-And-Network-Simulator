@@ -21,6 +21,9 @@
 #include <stdint.h>
 #include "s11_packet.h"
 
+/* Forward declaration; the full definition is provided by s11_model.h. */
+typedef struct s11_link_model_config_t s11_link_model_config_t;
+
 /************************************* Macros Part ************************************* */
 
 #define S11_NETWORK_ID_MAX_LEN 64
@@ -83,6 +86,7 @@ typedef struct
      * @brief Number of packets dropped by the network.
     */
     uint64_t packets_dropped;
+    uint64_t total_delay_us;
 
 } s11_network_t;
 
@@ -122,6 +126,8 @@ void s11_network_destroy(s11_network_t *network);
  * @return
  * Processing result containing the packet status and applied delay.
  */
+void s11_network_set_runtime_config(const s11_link_model_config_t *config);
+
 s11_process_result_t s11_network_process(
     s11_network_t *network,
     const s11_packet_t *packet

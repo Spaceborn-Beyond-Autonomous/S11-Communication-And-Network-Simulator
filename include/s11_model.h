@@ -64,7 +64,7 @@ typedef struct
  * One instance exists for each supported link type, such as
  * "lte", "5g", "mesh", "lora", or "satellite".
  */
-typedef struct
+typedef struct s11_link_model_config_t
 {
     /**
      * @brief Identifier of the communication link type.

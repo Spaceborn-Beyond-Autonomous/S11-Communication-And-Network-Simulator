@@ -10,6 +10,9 @@
 #include <string.h>
 
 
+static s11_link_model_config_t g_runtime_config;
+static int g_runtime_config_valid = 0;
+
 static s11_bandwidth_state_t g_bandwidth_state =
 {
     0U,
@@ -43,6 +46,7 @@ s11_network_t *s11_network_create(const char *network_id)
     network->packets_transmitted = 0U;
     network->packets_received    = 0U;
     network->packets_dropped     = 0U;
+    network->total_delay_us      = 0U;
 
     return (network);
 }
@@ -55,6 +59,12 @@ void s11_network_destroy(s11_network_t *network)
     }
 
     free(network);
+}
+
+void s11_network_set_runtime_config(const s11_link_model_config_t *config)
+{
+    if (config != NULL) { g_runtime_config = *config; g_runtime_config_valid = 1; }
+    else { g_runtime_config_valid = 0; }
 }
 
 s11_process_result_t s11_network_process(
@@ -135,7 +145,9 @@ s11_process_result_t s11_network_process(
         return (result);
     }
 
-    if(!s11_config_load(&config, "config/network.yaml", link_type))
+    if (g_runtime_config_valid) {
+        config = g_runtime_config;
+    } else if(!s11_config_load(&config, "config/network.yaml", link_type))
     {
         network->packets_dropped++;
         result.status = S11_PACKET_DROPPED; 
@@ -172,6 +184,7 @@ s11_process_result_t s11_network_process(
     }
 
     network->packets_transmitted++;
+    network->total_delay_us += model_result.delay_us;
 
     result = model_result;
 

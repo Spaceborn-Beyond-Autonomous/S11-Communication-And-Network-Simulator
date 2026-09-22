@@ -35,6 +35,7 @@ set(S11_SOURCES
 
     src/logger/network_logger.c
     src/monitor/network_monitor.c
+    src/monitor/network_dashboard.c
 )
 
 add_executable(s11_simulator
@@ -57,4 +58,25 @@ target_compile_options(s11_simulator
         -Wall
         -Wextra
         -Wpedantic
+)
+
+enable_testing()
+
+# Run tests from the source tree so relative config/log paths resolve correctly.
+add_test(NAME s11_smoke
+         COMMAND s11_simulator --scenario normal --packets 1 --no-dashboard)
+set_tests_properties(s11_smoke PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_test(NAME s11_partition_recovery
+         COMMAND s11_simulator --scenario partition --packets 1 --no-dashboard)
+set_tests_properties(s11_partition_recovery PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_test(NAME s11_jamming
+         COMMAND s11_simulator --scenario jamming --packets 1 --no-dashboard)
+set_tests_properties(s11_jamming PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
