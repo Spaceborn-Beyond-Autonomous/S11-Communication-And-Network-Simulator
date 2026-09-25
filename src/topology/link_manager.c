@@ -1,15 +1,4 @@
-#include <stdio.h>
-#include <stdbool.h>
-
-#define S11_MAX_NODES 32
-
-typedef struct
-{
-    int source;
-    int destination;
-    bool enabled;
-    bool jammed;
-} S11Link;
+#include "s11_link.h"
 
 static S11Link links[S11_MAX_NODES][S11_MAX_NODES];
 
